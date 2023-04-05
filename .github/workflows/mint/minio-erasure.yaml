@@ -2,14 +2,18 @@ version: '3.7'
 
 # Settings and configurations that are common for all containers
 x-minio-common: &minio-common
-  image: quay.io/minio/minio:RELEASE.2023-03-24T21-41-23Z
-  command: server --console-address ":9001" http://minio{1...4}/data{1...2}
+  image: minio/minio:${JOB_NAME}
+  command: server --console-address ":9001" edata{1...4}
   expose:
     - "9000"
     - "9001"
-  # environment:
-    # MINIO_ROOT_USER: minioadmin
-    # MINIO_ROOT_PASSWORD: minioadmin
+  environment:
+    MINIO_CI_CD: "on"
+    MINIO_ROOT_USER: "minio"
+    MINIO_ROOT_PASSWORD: "minio123"
+    MINIO_COMPRESS: "true"
+    MINIO_COMPRESS_MIMETYPES: "*"
+    MINIO_KMS_SECRET_KEY: "my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw="
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
     interval: 30s
@@ -24,52 +28,26 @@ services:
     <<: *minio-common
     hostname: minio1
     volumes:
-      - data1-1:/data1
-      - data1-2:/data2
-
-  minio2:
-    <<: *minio-common
-    hostname: minio2
-    volumes:
-      - data2-1:/data1
-      - data2-2:/data2
-
-  minio3:
-    <<: *minio-common
-    hostname: minio3
-    volumes:
-      - data3-1:/data1
-      - data3-2:/data2
-
-  minio4:
-    <<: *minio-common
-    hostname: minio4
-    volumes:
-      - data4-1:/data1
-      - data4-2:/data2
+      - edata1-1:/edata1
+      - edata1-2:/edata2
+      - edata1-3:/edata3
+      - edata1-4:/edata4
 
   nginx:
     image: nginx:1.19.2-alpine
     hostname: nginx
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-1-node.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "9000:9000"
       - "9001:9001"
     depends_on:
       - minio1
-      - minio2
-      - minio3
-      - minio4
 
 ## By default this config uses default local driver,
 ## For custom volumes replace with volume driver configuration.
 volumes:
-  data1-1:
-  data1-2:
-  data2-1:
-  data2-2:
-  data3-1:
-  data3-2:
-  data4-1:
-  data4-2:
+  edata1-1:
+  edata1-2:
+  edata1-3:
+  edata1-4:
